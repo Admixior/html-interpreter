@@ -78,7 +78,7 @@ def t_ANY_error(t) :
     return t
 
 lexer = lex.lex()
-fh = open("example.txt", "r");
+fh = open("example.html", "r");
 lexer.input( fh.read() )
 for token in lexer:
     print("line %d: %s(%s)" %(token.lineno, token.type, token.value))
