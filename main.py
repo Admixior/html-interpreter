@@ -1,7 +1,7 @@
 import ply.lex as lex
 import re
 
-tokens = ( 'HTMLstart', 'HTMLend', 'BODYstart', 'BODYend', 'HEADstart', 'HEADend', 'TITLEstart', 'TITLEend', 'TITLEtext','H1', 'TEXT' )
+tokens = ( 'HTMLstart', 'HTMLend', 'BODYstart', 'BODYend', 'HEADstart', 'HEADend', 'TITLEstart', 'TITLEend', 'TITLEtext','H1', 'TEXT', 'COMMENT' )
 
 states = (
     ('htmlstate','inclusive'),
@@ -12,9 +12,10 @@ states = (
 )
 
 t_ANY_H1 = r'<\/?h1>'
+t_ANY_ignore = r'\s*'
 
 def t_HTMLstart(t):
-    r'<html>'
+    r'<html\s[a-zA-Z]*="[a-zA-Z]*">'
     t.lexer.begin('htmlstate')
     return t
 
@@ -67,6 +68,9 @@ def t_titlestate_TITLEend(t):
     t.lexer.begin('headstate')
     return t
 
+def t_ANY_COMMENT(t):
+    r'<!--.*-->'
+    return t
 
 def t_ANY_newline(t):
     r'\n+'
