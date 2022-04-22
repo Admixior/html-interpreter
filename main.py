@@ -1,7 +1,8 @@
 import ply.lex as lex
+import AST
 import re
 
-tokens = ( 'HTMLstart', 'HTMLend', 'BODYstart', 'BODYend', 'HEADstart', 'HEADend', 'TITLEstart', 'TITLEend', 'TITLEtext','H1', 'TEXT', 'COMMENT' )
+tokens = ( 'HTMLstart', 'HTMLend', 'BODYstart', 'BODYend', 'HEADstart', 'HEADend', 'TITLEstart', 'TITLEend', 'TITLEtext','H1', 'CENTER', 'BUTTON', 'TEXT', 'COMMENT' )
 
 states = (
     ('htmlstate','inclusive'),
@@ -11,11 +12,10 @@ states = (
     ('commentstate','exclusive')
 )
 
-t_ANY_H1 = r'<\/?h1>'
-t_ANY_ignore = r'\s*'
+
 
 def t_HTMLstart(t):
-    r'<html\s[a-zA-Z]*="[a-zA-Z]*">'
+    r'<html(\s[a-zA-Z]*="[a-zA-Z]*")*>'
     t.lexer.begin('htmlstate')
     return t
 
@@ -51,11 +51,40 @@ def t_bodystate_HTMLend(t):
     return t
 
 def t_bodystate_TEXT(t):
-    r'[^<\n]+'
+    r'[^<\n\s]+[^<\n]*'
+    AST.open_tag('text')
+    AST.new_attr_tag('innertext',t.value)
+    AST.new_attr_tag('align', AST.temp_style['align'])
+    AST.new_attr_tag('size', AST.temp_style['size'])
+    AST.move_up_to_close_tag("text")
     return t
+
+def t_bodystate_BUTTON(t):
+    r'<button>[^<]+<\/button>'
+    AST.open_tag('button')
+    AST.new_attr_tag('innertext',t.value[8:-9])
+    AST.new_attr_tag('align', AST.temp_style['align'])
+    AST.new_attr_tag('size', AST.temp_style['size'])
+    AST.move_up_to_close_tag("button")
+    return t
+
+def t_bodystate_H1(t):
+    r'<\/?h1>'
+    if t.value[1]=='/':
+        AST.temp_style['size']='normal'
+    else:
+        AST.temp_style['size']='h1'
+
+def t_bodystate_CENTER(t):
+    r'<\/?center>'
+    if t.value[1]=='/':
+        AST.temp_style['align']='left'
+    else:
+        AST.temp_style['align']='center'
 
 def t_titlestate_TITLEtext(t):
     r'[^<\n]+'
+    AST.AST_tree['attr']['windowtitle'] = t.value
     return t
 
 def t_headstate_TITLEstart(t):
@@ -73,7 +102,7 @@ def t_ANY_COMMENT(t):
     return t
 
 def t_ANY_newline(t):
-    r'\n+'
+    r'\n[\s\t]*'
     t.lexer.lineno += len(t.value)
 
 def t_ANY_error(t) :
@@ -86,3 +115,7 @@ fh = open("example.html", "r");
 lexer.input( fh.read() )
 for token in lexer:
     print("line %d: %s(%s)" %(token.lineno, token.type, token.value))
+
+
+
+AST.renderowanie()
